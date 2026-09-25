@@ -73,6 +73,7 @@ fn main() {
             b.score
                 .cmp(&a.score) // sort score descending
                 .then_with(|| a.last_name.cmp(&b.last_name)) // sort last names ascending
+                .then_with(|| a.first_name.cmp(&b.first_name))
         });
         for x in records {
             println!("{x}");
