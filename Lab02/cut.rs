@@ -98,35 +98,18 @@ fn parse_ranges(input: &str) -> Option<Vec<Range>> {
     Some(ranges)
 }
 
-fn select_characters(line: &str, ranges: &[Range]) -> String {
-    line.chars()
-        .enumerate()
-        .filter_map(|(index, character)| {
-            let position = index + 1;
-
-            if ranges.iter().any(|range| range.contains(position)) {
-                Some(character)
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-fn select_fields(line: &str, ranges: &[Range]) -> String {
-    line.split('\t')
-        .enumerate()
-        .filter_map(|(index, field)| {
-            let position = index + 1;
-
-            if ranges.iter().any(|range| range.contains(position)) {
-                Some(field)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\t")
+// evil gross generic function
+fn select<'a, T: 'a>(
+    items: impl Iterator<Item = T> + 'a,
+    ranges: &'a [Range],
+) -> impl Iterator<Item = T> + 'a {
+    items.enumerate().filter_map(move |(index, item)| {
+        let position = index + 1;
+        ranges
+            .iter()
+            .any(|range| range.contains(position))
+            .then_some(item)
+    })
 }
 
 fn process_input(mode: char, ranges: &[Range]) {
@@ -142,8 +125,10 @@ fn process_input(mode: char, ranges: &[Range]) {
         };
 
         let output = match mode {
-            'c' => select_characters(&line, ranges),
-            'f' => select_fields(&line, ranges),
+            'c' => select(line.chars(), ranges).collect(),
+            'f' => select(line.split('\t'), ranges)
+                .collect::<Vec<_>>()
+                .join("\t"),
             _ => unreachable!(),
         };
 
